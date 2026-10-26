@@ -1,0 +1,34 @@
+<div class="sim">
+  <div class="main">
+    <div class="panel glow">
+      <div class="toolbar">
+        <button class="btn primary sm" data-play>▶ Run</button>
+        <select data-speed aria-label="Speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="3">3×</option></select>
+        <span class="sep"></span>
+        <select id="layout" aria-label="Layout"><option value="4,2">RS(4,2)</option><option value="6,3" selected>RS(6,3)</option><option value="10,4">RS(10,4)</option><option value="1,2">3× replication</option></select>
+        <button class="btn sm bad" id="zone">Fail zone-a</button>
+        <button class="btn sm bad" id="rot">Bit rot ×3</button>
+        <button class="btn sm" id="replace">Replace failed disks</button>
+        <button class="btn sm on" id="auto">Auto-repair</button>
+        <span class="sp"></span>
+        <span class="live"><i></i> paused</span>
+      </div>
+      <div id="kpis" style="margin-top:12px"></div>
+    </div>
+    <div class="viz" id="clw" style="height:480px"><span class="tag">click a node to fail / recover it</span><canvas id="cl"></canvas></div>
+    <div class="g2 grid">
+      <div class="panel"><div class="ph">Stripe health</div><canvas class="chart" id="ch1" style="height:140px"></canvas></div>
+      <div class="panel"><div class="ph">Repair traffic (shards / s)</div><canvas class="chart" id="ch2" style="height:140px"></canvas></div>
+    </div>
+  </div>
+  <div class="side">
+    <div class="panel"><div class="ph">PUT / GET an object</div>
+      <label class="f">key <input id="key" value="notes/hello.txt" spellcheck="false" /></label>
+      <textarea id="body" rows="3" spellcheck="false" style="width:100%;margin-top:8px;font:12px/1.5 var(--mono)">Erasure coding: any k of k+m shards rebuild this text byte for byte, even with a whole zone offline.</textarea>
+      <div class="toolbar" style="margin-top:8px"><button class="btn primary sm" id="put">PUT</button><button class="btn sm" id="get">GET</button><span class="sp"></span><span class="pill dim" id="etag">—</span></div>
+      <div id="strip" class="strip"></div>
+      <div id="out" class="log" style="height:120px;margin-top:8px;font-size:11px"></div>
+    </div>
+    <div class="panel"><div class="ph">Cluster events</div><div id="log" class="log" style="height:300px;font-size:11px"></div></div>
+  </div>
+</div>

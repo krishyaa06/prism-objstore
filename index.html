@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prism Objstore · Erasure-coded, S3-compatible object storage with self-healing · Prism Systems</title>
+  <meta name="description" content="Prism Objstore is a distributed object storage engine: systematic Reed–Solomon erasure coding with a Cauchy parity matrix over GF(256), rendezvous-hashed placement with per-zone caps, CRC-32 per shard, degraded reads that rebuild data from parity, budgeted background repair, scrubbing for silent bit rot, buckets with versioning and delete markers, ListObjectsV2 with delimiters, multipart uploads with S3-style ETags, byte ranges, a durability model, and an S3-compatible HTTP API." />
+  <meta name="theme-color" content="#06070d" />
+  <meta property="og:title" content="Prism Objstore · Prism Systems" />
+  <meta property="og:description" content="Prism Objstore is a distributed object storage engine: systematic Reed–Solomon erasure coding with a Cauchy parity matrix over GF(256), rendezvous-hashed placement with per-zone caps, CRC-32 per shard, degraded reads that rebuild data from parity, budgeted background repair, scrubbing for silent bit rot, buckets with versioning and delete markers, ListObjectsV2 with delimiters, multipart uploads with S3-style ETags, byte ranges, a durability model, and an S3-compatible HTTP API." />
+  <meta property="og:image" content="https://krishyaa06.github.io/prism-objstore/assets/screenshots/desktop.png" />
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/pro.css" />
+  <link rel="stylesheet" href="css/app.css" />
+  <style>:root{--accent:#00D2FF;--accent-2:#A78BFA}</style>
+</head>
+<body>
+  <canvas id="bg" aria-hidden="true"></canvas>
+  <header class="topbar"><div class="wrap">
+    <a class="brand" href="./"><span class="mark">◆</span><b>PRISM</b><span>Objstore</span></a>
+    <nav>
+      <a class="nl" href="#sim">Simulator</a><a class="nl" href="#features">Features</a><a class="nl" href="#how">How it works</a><a class="nl" href="#arch">Architecture</a><a class="nl" href="#use">Use it</a>
+      <a class="btn sm" href="https://github.com/krishyaa06/prism-objstore" target="_blank" rel="noreferrer">★ GitHub</a>
+    </nav>
+  </div></header>
+  <main>
+    <section class="hero wrap">
+      <p class="eyebrow"><span class="n">06 / 49</span>Prism Systems · Cloud-Native &amp; Developer Infrastructure</p>
+      <h1>Object storage that <em>survives a whole zone</em> at 1.5× cost</h1>
+      <p class="lead">An S3-compatible object store built on Reed–Solomon erasure coding over GF(256): zone-aware shard placement, degraded reads, background repair, CRC scrubbing for bit rot, versioning, multipart uploads and Range requests.</p>
+      <div class="cta"><a class="btn primary" href="#sim">▶ Launch the simulator</a><a class="btn" href="#use">Use the engine</a><a class="btn ghost" href="https://github.com/krishyaa06/prism-objstore" target="_blank" rel="noreferrer">View source →</a></div>
+      <div class="chips"><span class="chip"><i></i>Zero dependencies</span><span class="chip"><i></i>Reed–Solomon GF(256)</span><span class="chip"><i></i>S3-compatible API</span><span class="chip"><i></i>~75 MB/s encode in JS</span><span class="chip"><i></i>Self-healing</span></div>
+    </section>
+    <section class="section wrap" id="sim">
+      <div class="sec-head"><span class="kicker">Live simulator</span><h2>Fail a zone and watch the cluster heal</h2><p>Objects stream in and are split into data and parity shards across 15 nodes in 3 zones. Fail zone-a, click nodes to kill them, inject bit rot, switch to 3× replication, then GET your own object back.</p></div>
+<div class="sim">
+  <div class="main">
+    <div class="panel glow">
+      <div class="toolbar">
+        <button class="btn primary sm" data-play>▶ Run</button>
+        <select data-speed aria-label="Speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="3">3×</option></select>
+        <span class="sep"></span>
+        <select id="layout" aria-label="Layout"><option value="4,2">RS(4,2)</option><option value="6,3" selected>RS(6,3)</option><option value="10,4">RS(10,4)</option><option value="1,2">3× replication</option></select>
+        <button class="btn sm bad" id="zone">Fail zone-a</button>
+        <button class="btn sm bad" id="rot">Bit rot ×3</button>
+        <button class="btn sm" id="replace">Replace failed disks</button>
+        <button class="btn sm on" id="auto">Auto-repair</button>
+        <span class="sp"></span>
+        <span class="live"><i></i> paused</span>
+      </div>
+      <div id="kpis" style="margin-top:12px"></div>
+    </div>
+    <div class="viz" id="clw" style="height:480px"><span class="tag">click a node to fail / recover it</span><canvas id="cl"></canvas></div>
+    <div class="g2 grid">
+      <div class="panel"><div class="ph">Stripe health</div><canvas class="chart" id="ch1" style="height:140px"></canvas></div>
+      <div class="panel"><div class="ph">Repair traffic (shards / s)</div><canvas class="chart" id="ch2" style="height:140px"></canvas></div>
+    </div>
+  </div>
+  <div class="side">
+    <div class="panel"><div class="ph">PUT / GET an object</div>
+      <label class="f">key <input id="key" value="notes/hello.txt" spellcheck="false" /></label>
+      <textarea id="body" rows="3" spellcheck="false" style="width:100%;margin-top:8px;font:12px/1.5 var(--mono)">Erasure coding: any k of k+m shards rebuild this text byte for byte, even with a whole zone offline.</textarea>
+      <div class="toolbar" style="margin-top:8px"><button class="btn primary sm" id="put">PUT</button><button class="btn sm" id="get">GET</button><span class="sp"></span><span class="pill dim" id="etag">—</span></div>
+      <div id="strip" class="strip"></div>
+      <div id="out" class="log" style="height:120px;margin-top:8px;font-size:11px"></div>
+    </div>
+    <div class="panel"><div class="ph">Cluster events</div><div id="log" class="log" style="height:300px;font-size:11px"></div></div>
+  </div>
+</div>
+
+    </section>
+    <section class="section wrap" id="features">
+      <div class="sec-head reveal"><span class="kicker">Features</span><h2>What's inside the engine</h2><p>Real algorithms, not mock-ups. The simulator above runs the exact same code you import.</p></div>
+      <div class="feat"><div class="card reveal"><div class="ic">◫</div><h3>Reed–Solomon coding</h3><p>Systematic RS(k, m) over GF(2^8) with a Cauchy parity matrix, so any k of the k+m shards reconstruct the data. Inverse matrices are cached per loss pattern.</p></div><div class="card reveal"><div class="ic">⌖</div><h3>Zone-aware placement</h3><p>Rendezvous hashing picks k+m distinct nodes per stripe with at most ⌈n/zones⌉ per zone, so RS(6,3) over 3 zones survives losing any one zone.</p></div><div class="card reveal"><div class="ic">↯</div><h3>Degraded reads</h3><p>Reads use the data shards when they are all online, otherwise rebuild the missing ones from parity on the fly. Range reads only touch the stripes they need.</p></div><div class="card reveal"><div class="ic">⟲</div><h3>Background repair</h3><p>Budgeted repair rebuilds missing shards onto healthy nodes in the least-used zones and never co-locates two shards of a stripe.</p></div><div class="card reveal"><div class="ic">✓</div><h3>Scrubbing</h3><p>Every shard carries a CRC-32. Reads skip corrupt shards and scrubs drop them, so silent bit rot is found and repaired before it adds up.</p></div><div class="card reveal"><div class="ic">🗂</div><h3>S3 semantics</h3><p>Buckets, versioning with delete markers, ListObjectsV2 with prefix, delimiter and continuation, user metadata and MD5 ETags.</p></div><div class="card reveal"><div class="ic">⇪</div><h3>Multipart uploads</h3><p>Out-of-order parts, ETag checks, unused parts freed on completion, and <code class="mono">md5(md5(p1)‖…)-N</code> ETags like S3.</p></div><div class="card reveal"><div class="ic">∞</div><h3>Durability model</h3><p>Binomial loss model per repair window with AFR, which shows why RS(6,3) beats 3× replication at half the storage.</p></div></div>
+    </section>
+    <section class="section wrap" id="how">
+      <div class="sec-head reveal"><span class="kicker">How it works</span><h2>From request to result</h2></div>
+      <div class="steps"><div class="step reveal"><h3>Stripe</h3><p>Objects are cut into stripes (1 MiB by default). Each stripe is split into k equal data shards, zero-padded at the end.</p></div><div class="step reveal"><h3>Encode</h3><p>m parity shards are computed as GF(256) linear combinations of the data shards (<code class="mono">dst ^= MUL[c][src]</code>).</p></div><div class="step reveal"><h3>Place</h3><p>Rendezvous hashing ranks nodes per stripe. A per-zone cap spreads shards, and each shard is stored with its CRC-32.</p></div><div class="step reveal"><h3>Read</h3><p>Collect shards from healthy nodes, drop any with a bad CRC, and use the fast path or invert the k×k sub-matrix to rebuild.</p></div><div class="step reveal"><h3>Heal</h3><p>Repair finds stripes with missing shards, rebuilds them from any k survivors and writes them to new nodes. Scrubs catch bit rot.</p></div></div>
+    </section>
+    <section class="section wrap" id="arch">
+      <div class="sec-head reveal"><span class="kicker">Architecture</span><h2>System design</h2><p>Every box is a module in src/. Data flows left to right.</p></div>
+      <div class="card arch reveal"><svg viewBox="0 0 1160 230" role="img" aria-label="Architecture diagram"><path class="e" d="M272,73 C290,73 290,73 308,73"/><path class="f" d="M272,73 C290,73 290,73 308,73"/><path class="e" d="M272,153 C290,153 290,73 308,73"/><path class="f" d="M272,153 C290,153 290,73 308,73"/><path class="e" d="M548,102 C578,102 578,124 548,124"/><path class="f" d="M548,102 C578,102 578,124 548,124"/><path class="e" d="M562,153 C580,153 580,73 598,73"/><path class="f" d="M562,153 C580,153 580,73 598,73"/><path class="e" d="M838,102 C868,102 868,124 838,124"/><path class="f" d="M838,102 C868,102 868,124 838,124"/><path class="e" d="M852,153 C870,153 870,73 888,73"/><path class="f" d="M852,153 C870,153 870,73 888,73"/><text class="el" x="870" y="107" text-anchor="middle">k+m shards</text><path class="e" d="M1128,102 C1158,102 1158,124 1128,124"/><path class="f" d="M1128,102 C1158,102 1158,124 1128,124"/><path class="e" d="M888,153 C870,153 870,73 852,73"/><path class="f" d="M888,153 C870,153 870,73 852,73"/><text class="el" x="870" y="107" text-anchor="middle">rebuild</text><text class="lane" x="145" y="24" text-anchor="middle">API</text><g class="node k0"><rect x="18" y="44" width="254" height="58" rx="12"/><text x="145" y="69" text-anchor="middle">S3 HTTP API</text><text class="s" x="145" y="83" text-anchor="middle">path-style · XML</text></g><g class="node k0"><rect x="18" y="124" width="254" height="58" rx="12"/><text x="145" y="149" text-anchor="middle">Multipart</text><text class="s" x="145" y="163" text-anchor="middle">parts · ETags</text></g><text class="lane" x="435" y="24" text-anchor="middle">METADATA</text><g class="node kk2"><rect x="308" y="44" width="254" height="58" rx="12"/><text x="435" y="69" text-anchor="middle">Buckets</text><text class="s" x="435" y="83" text-anchor="middle">versions · markers</text></g><g class="node kk2"><rect x="308" y="124" width="254" height="58" rx="12"/><text x="435" y="149" text-anchor="middle">Stripe map</text><text class="s" x="435" y="163" text-anchor="middle">shard → node · crc</text></g><text class="lane" x="725" y="24" text-anchor="middle">CODING</text><g class="node kk3"><rect x="598" y="44" width="254" height="58" rx="12"/><text x="725" y="69" text-anchor="middle">Reed–Solomon</text><text class="s" x="725" y="83" text-anchor="middle">GF(256) · Cauchy</text></g><g class="node kk3"><rect x="598" y="124" width="254" height="58" rx="12"/><text x="725" y="149" text-anchor="middle">Placement</text><text class="s" x="725" y="163" text-anchor="middle">rendezvous · zone cap</text></g><text class="lane" x="1015" y="24" text-anchor="middle">NODES</text><g class="node k0"><rect x="888" y="44" width="254" height="58" rx="12"/><text x="1015" y="69" text-anchor="middle">Shard stores</text><text class="s" x="1015" y="83" text-anchor="middle">15 nodes · 3 zones</text></g><g class="node k0"><rect x="888" y="124" width="254" height="58" rx="12"/><text x="1015" y="149" text-anchor="middle">Repair + scrub</text><text class="s" x="1015" y="163" text-anchor="middle">rebuild · crc32</text></g></svg></div>
+    </section>
+    <section class="section wrap" id="use">
+      <div class="sec-head reveal"><span class="kicker">Use it</span><h2>Ship it in your own stack</h2><p>Zero dependencies. Works in Node.js 18+ and modern browsers.</p></div>
+      <div class="tabs" data-tabs="use"><button class="on">JavaScript API</button><button>CLI</button><button>Install</button></div>
+      <div class="tabp on" data-tabp="use"><div class="codebox"><div class="bar2"><i></i><i></i><i></i><span>example.js</span><button class="btn sm ghost copy" data-copy>Copy</button></div><pre><code><span class="tk-k">import</span> { ObjectStore, ReedSolomon, durability } <span class="tk-k">from</span> <span class="tk-s">&quot;prism-objstore&quot;</span>;
+
+<span class="tk-k">const</span> s3 = <span class="tk-k">new</span> <span class="tk-f">ObjectStore</span>({ k: <span class="tk-n">6</span>, m: <span class="tk-n">3</span>, nodes: <span class="tk-n">12</span>, zones: <span class="tk-n">3</span> });
+s3.<span class="tk-f">createBucket</span>(<span class="tk-s">&quot;photos&quot;</span>, { versioning: <span class="tk-k">true</span> });
+s3.<span class="tk-f">putObject</span>(<span class="tk-s">&quot;photos&quot;</span>, <span class="tk-s">&quot;2026/cat.jpg&quot;</span>, bytes, { contentType: <span class="tk-s">&quot;image/jpeg&quot;</span> });
+
+<span class="tk-k">for</span> (<span class="tk-k">const</span> n <span class="tk-k">of</span> s3.nodes.<span class="tk-f">filter</span>((n) =&gt; n.zone === <span class="tk-s">&quot;zone-a&quot;</span>)) s3.<span class="tk-f">fail</span>(n.id);   <span class="tk-c">// lose a zone</span>
+<span class="tk-k">const</span> { body, etag } = s3.<span class="tk-f">getObject</span>(<span class="tk-s">&quot;photos&quot;</span>, <span class="tk-s">&quot;2026/cat.jpg&quot;</span>);              <span class="tk-c">// degraded read, still correct</span>
+s3.<span class="tk-f">repair</span>();                                                                 <span class="tk-c">// rebuild missing shards</span>
+s3.<span class="tk-f">scrub</span>();                                                                  <span class="tk-c">// find bit rot via CRC-32</span>
+
+<span class="tk-c">// raw codec</span>
+<span class="tk-k">const</span> rs = <span class="tk-k">new</span> <span class="tk-f">ReedSolomon</span>(<span class="tk-n">10</span>, <span class="tk-n">4</span>);
+<span class="tk-k">const</span> shards = rs.<span class="tk-f">encode</span>(data);      <span class="tk-c">// 14 shards</span>
+shards[<span class="tk-n">2</span>] = shards[<span class="tk-n">7</span>] = <span class="tk-k">null</span>;        <span class="tk-c">// lose any 4</span>
+rs.<span class="tk-f">reconstruct</span>(shards); rs.<span class="tk-f">join</span>(shards, data.length);
+
+<span class="tk-f">durability</span>({ k: <span class="tk-n">6</span>, m: <span class="tk-n">3</span>, afr: <span class="tk-n">0.02</span>, repairHours: <span class="tk-n">6</span> });   <span class="tk-c">// { overhead: 1.5, nines: 14.2 }</span></code></pre></div></div>
+      <div class="tabp" data-tabp="use"><div class="codebox"><div class="bar2"><i></i><i></i><i></i><span>terminal</span><button class="btn sm ghost copy" data-copy>Copy</button></div><pre><code><span class="tk-pr">$ </span>npx github:krishyaa06/prism-objstore demo
+<span class="tk-pr">$ </span>npx github:krishyaa06/prism-objstore encode photo.jpg <span class="tk-p">--k</span> 10 <span class="tk-p">--m</span> 4
+<span class="tk-pr">$ </span>npx github:krishyaa06/prism-objstore durability <span class="tk-p">--afr</span> 0.03 <span class="tk-p">--repair</span> 12
+<span class="tk-pr">$ </span>npx github:krishyaa06/prism-objstore serve <span class="tk-p">--port</span> 9000
+<span class="tk-pr">$ </span>curl <span class="tk-p">-X</span> PUT localhost:9000/photos &amp;&amp; curl <span class="tk-p">-T</span> cat.jpg localhost:9000/photos/cat.jpg
+<span class="tk-pr">$ </span>curl <span class="tk-p">-X</span> POST localhost:9000/_admin/fail/node-01 &amp;&amp; curl <span class="tk-p">-r</span> 0-99 localhost:9000/photos/cat.jpg</code></pre></div></div>
+      <div class="tabp" data-tabp="use"><div class="codebox"><div class="bar2"><i></i><i></i><i></i><span>terminal</span><button class="btn sm ghost copy" data-copy>Copy</button></div><pre><code><span class="tk-c"># use the CLI without installing</span>
+<span class="tk-pr">$ </span>npx github:krishyaa06/prism-objstore <span class="tk-p">--help</span>
+
+<span class="tk-c"># or add the engine to your project</span>
+<span class="tk-pr">$ </span>npm install github:krishyaa06/prism-objstore
+
+<span class="tk-c"># run the simulator locally</span>
+<span class="tk-pr">$ </span>git clone https://github.com/krishyaa06/prism-objstore.git &amp;&amp; cd prism-objstore
+<span class="tk-pr">$ </span>npx serve .   # then open http://localhost:3000</code></pre></div></div>
+    </section>
+  </main>
+  <footer class="foot"><div class="wrap">
+    <span>◆ Prism Objstore · Prism Systems 06/49 · Built by <a href="https://github.com/krishyaa06">Soumya Bhandare</a> &amp; <a href="https://dc.gg/prismprotocol" target="_blank" rel="noreferrer">Prism Protocol</a></span>
+    <span><a href="https://github.com/krishyaa06/prism-objstore" target="_blank" rel="noreferrer">Source</a> · <a href="https://github.com/krishyaa06/prism-objstore/blob/main/docs/ARCHITECTURE.md">Architecture</a> · <a href="https://github.com/krishyaa06/prism-objstore/blob/main/docs/USAGE.md">Docs</a> · MIT License</span>
+  </div></footer>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

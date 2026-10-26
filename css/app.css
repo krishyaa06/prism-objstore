@@ -1,0 +1,11 @@
+#kpis{grid-template-columns:repeat(6,minmax(0,1fr))}
+@media(max-width:1200px){#kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:480px){#kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){#clw{height:560px!important}}
+#cl{cursor:pointer}
+.strip{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap}
+.strip span{flex:1;min-width:22px;padding:6px 0;text-align:center;border-radius:6px;font:600 10px var(--mono);border:1px solid var(--line)}
+.strip .d{background:color-mix(in srgb,#00d2ff 16%,transparent);color:#00d2ff;border-color:#00d2ff66}
+.strip .p{background:color-mix(in srgb,#a78bfa 16%,transparent);color:#a78bfa;border-color:#a78bfa66}
+.strip .x{background:#ff5c8a14;color:#ff5c8a;border-color:#ff5c8a66;text-decoration:line-through}
+.strip .r{background:#ffb54718;color:#ffb547;border-color:#ffb54788}

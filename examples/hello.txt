@@ -1,0 +1,3 @@
+Prism Objstore sample object.
+Erasure coding turns one object into k data shards and m parity shards.
+Any k of them rebuild the original, byte for byte.

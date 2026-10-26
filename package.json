@@ -1,0 +1,43 @@
+{
+  "name": "prism-objstore",
+  "version": "1.0.0",
+  "description": "Prism Objstore is a distributed object storage engine: systematic Reed–Solomon erasure coding with a Cauchy parity matrix over GF(256), rendezvous-hashed placement with per-zone caps, CRC-32 per shard, degraded reads that rebuild data from parity, budgeted background repair, scrubbing for silent bit rot, buckets with versioning and delete markers, ListObjectsV2 with delimiters, multipart uploads with S3-style ETags, byte ranges, a durability model, and an S3-compatible HTTP API.",
+  "type": "module",
+  "bin": {
+    "objstore": "bin/objstore.js"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "start": "npx --yes serve ."
+  },
+  "keywords": [
+    "object-storage",
+    "erasure-coding",
+    "reed-solomon",
+    "s3",
+    "distributed-storage",
+    "galois-field",
+    "durability",
+    "storage",
+    "minio",
+    "javascript"
+  ],
+  "author": "Soumya Bhandare (krishyaa06)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/krishyaa06/prism-objstore.git"
+  },
+  "homepage": "https://krishyaa06.github.io/prism-objstore/",
+  "engines": {
+    "node": ">=18.17"
+  }
+}
